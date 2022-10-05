@@ -6,9 +6,11 @@ import myEpicGame from "../../utils/MyEpicGame.json";
 import "./Arena.css";
 import LoadingIndicator from "../LoadingIndicator";
 
-const Arena = ({ characterNFT, setCharacterNFT }) => {
+const Arena = ({ characterNFT, setCharacterNFT, currentAccount }) => {
   const [gameContract, setGameContract] = useState(null);
   const [boss, setBoss] = useState(null);
+  const [allPlayers, setAllPlayers] = useState(null);
+  const [otherPlayers, setOtherPlayers] = useState(null);
   const [attackState, setAttackState] = useState("");
   const [showToast, setShowToast] = useState(false);
 
@@ -35,11 +37,64 @@ const Arena = ({ characterNFT, setCharacterNFT }) => {
     }
   };
 
+  const renderActivePlayersList = () =>
+    otherPlayers.map((player, index) => (
+      <div className="player" key={player.name}>
+        <div className="image-content">
+          <h2>{player.name}</h2>
+          <img
+            src={`https://cloudflare-ipfs.com/ipfs/${player.imageURI}`}
+            alt={`Character ${player.name}`}
+          />
+          <div className="health-bar">
+            <progress value={player.hp} max={player.maxHp} />
+            <p>{`${player.hp} / ${player.maxHp} HP`}</p>
+          </div>
+        </div>
+        <div className="stats">
+          <h4>{`⚔️ Attack Damage: ${player.attackDamage}`}</h4>
+        </div>
+      </div>
+    ));
+
   useEffect(() => {
     const fetchBoss = async () => {
       const bossTxn = await gameContract.getBigBoss();
       console.log("Boss:", bossTxn);
       setBoss(transformCharacterData(bossTxn));
+    };
+
+    // const getAllPlayers = async () => {
+    //   try {
+    //     console.log("Getting contract all players");
+    //     const playersTxn = await gameContract.getAllPlayers();
+
+    //     const players = playersTxn.map((playerData) =>
+    //       transformCharacterData(playerData)
+    //     );
+    //     setAllPlayers(players);
+    //     console.log("Players:", players);
+    //   } catch (error) {
+    //     console.error("Something went wrong fetching all players:", error);
+    //   }
+    // };
+
+    const getOtherPlayers = async () => {
+      try {
+        console.log("Getting contract all players");
+        const playersTxn = await gameContract.getAllPlayers();
+        const id = await gameContract.nftHolders(currentAccount);
+
+        const players = playersTxn
+          .filter((playerData, index) => {
+            return index !== id - 1;
+          })
+          .map((playerData) => transformCharacterData(playerData));
+        setOtherPlayers(players);
+        console.log("Other players:", players);
+      } catch (error) {
+        console.error("Something went wrong fetching all players:", error);
+      }
     };
 
     const onAttackComplete = (newBossHp, newPlayerHp) => {
@@ -57,6 +112,8 @@ const Arena = ({ characterNFT, setCharacterNFT }) => {
 
     if (gameContract) {
       fetchBoss();
+      // getAllPlayers();
+      getOtherPlayers();
       gameContract.on("AttackComplete", onAttackComplete);
     }
 
@@ -119,7 +176,7 @@ const Arena = ({ characterNFT, setCharacterNFT }) => {
         </div>
       )}
       {/* NFTキャラクターをレンダリング*/}
-      {characterNFT && (
+      {characterNFT /*&& allPlayers*/ && otherPlayers && (
         <div className="players-container">
           <div className="player-container">
             <h2>Your Character</h2>
@@ -140,10 +197,10 @@ const Arena = ({ characterNFT, setCharacterNFT }) => {
               </div>
             </div>
           </div>
-          {/* <div className="active-players">
-            <h2>Active Players</h2>
-            <div className="players-list">{renderActivePlayersList()}</div>
-          </div> */}
+          <div className="player-container">
+            <h2>Other Players</h2>
+            <div className="all-players">{renderActivePlayersList()}</div>
+          </div>
         </div>
       )}
     </div>
