@@ -49,6 +49,16 @@
   object-fit: cover;
 }
 
+.win {
+  height: 566px;
+  display: flex;
+}
+
+.win h2 {
+  margin: auto;
+  font-size: 36px;
+}
+
 .image-content .health-bar {
   position: absolute;
   bottom: 0;

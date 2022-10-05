@@ -9,6 +9,7 @@ import LoadingIndicator from "../LoadingIndicator";
 const Arena = ({ characterNFT, setCharacterNFT, currentAccount }) => {
   const [gameContract, setGameContract] = useState(null);
   const [boss, setBoss] = useState(null);
+  const [win, setWin] = useState(false);
   const [allPlayers, setAllPlayers] = useState(null);
   const [otherPlayers, setOtherPlayers] = useState(null);
   const [attackState, setAttackState] = useState("");
@@ -61,7 +62,11 @@ const Arena = ({ characterNFT, setCharacterNFT, currentAccount }) => {
     const fetchBoss = async () => {
       const bossTxn = await gameContract.getBigBoss();
       console.log("Boss:", bossTxn);
-      setBoss(transformCharacterData(bossTxn));
+      const bossData = transformCharacterData(bossTxn);
+      setBoss(bossData);
+      if (bossData.hp === 0) {
+        setWin(true);
+      }
     };
 
     // const getAllPlayers = async () => {
@@ -108,6 +113,9 @@ const Arena = ({ characterNFT, setCharacterNFT, currentAccount }) => {
       setCharacterNFT((prevState) => {
         return { ...prevState, hp: playerHp };
       });
+      if (bossHp === 0) {
+        setWin(true);
+      }
     };
 
     if (gameContract) {
@@ -149,7 +157,7 @@ const Arena = ({ characterNFT, setCharacterNFT, currentAccount }) => {
         </div>
       )}
       {/* ボスをレンダリング */}
-      {boss && (
+      {boss && !win && (
         <div className="boss-container">
           <div className={`boss-content ${attackState}`}>
             <h2>🔥 {boss.name} 🔥</h2>
@@ -173,6 +181,12 @@ const Arena = ({ characterNFT, setCharacterNFT, currentAccount }) => {
               <p>Attacking ⚔️</p>
             </div>
           )}
+        </div>
+      )}
+      {/* ボスに勝った場合 */}
+      {boss && win && (
+        <div className="win">
+          <h2>🎉🎉🎉 YOU WIN 🎉🎉🎉</h2>
         </div>
       )}
       {/* NFTキャラクターをレンダリング*/}
